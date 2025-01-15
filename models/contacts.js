@@ -1,68 +1,120 @@
-const { 
-  showContacts,
-  contactById,
-  deleteContact,
-  newContact,
-  updContact, } = require('./helpAPI.js');
+const Contacts = require('./schema.js');
 
-const listContacts = async (req, res) => {
+const listContacts = async (_, res, next) => {
   try {
-    const contacts = await showContacts();
-    res.status(200).json(contacts);
+    const contacts = await Contacts.find();
+    res.json({
+      status: 'success',
+      code: 200,
+      data: {
+        result: contacts,
+      },
+    });
   } catch (error) {
-    res.status(500).json({msg: error.message});
+    console.error(error);
+    next(error);
   }
-}
+};
 
-const getContactById = async (req, res) => {
+const getContactById = async (req, res, next) => {
   try {
-    const contact = await contactById(req.params.id)
+    const contact = await Contacts.findById(req.params.id);
     if (!contact) {
       return res.status(404).json({msg: "Not Found"});
     }
-    res.status(200).json(contact);
+    res.json({
+      status: 'success',
+      code: 200,
+      data: {
+        result: contact,
+      },
+    });
   } catch (error) {
-    res.status(500).json({msg: error.message, msg2: req.params.id});
+    console.error(error);
+    next(error);
   }
-}
+};
 
-const removeContact = async (req, res) => {
+const removeContact = async (req, res, next) => {
   try {
-    const contact = await deleteContact(req.params.id)
+    const contact = await Contacts.findByIdAndDelete(req.params.id);
     if (!contact) {
       return res.status(404).json({msg: "Not Found"});
     }
-    res.status(200).json({msg: "contact deleted"});
+    res.json({
+      status: 'success',
+      code: 200,
+      data: {
+        result: contact,
+      },
+    });
   } catch (error) {
-    res.status(500).json({msg: error.message});
+    console.error(error);
+    next(error);
   }
-}
+};
 
-const addContact = async (req, res) => {
+const addContact = async (req, res, next) => {
   try {
-    const contact = await newContact(req.body);
-    res.status(201).json(contact);
+    const contact = await Contacts.create(req.body);
+    res.json({
+      status: 'success',
+      code: 201,
+      data: {
+        result: contact,
+      },
+    });
   } catch (error) {
-    res.status(500).json({msg: error.message});
+    console.error(error);
+    next(error);
   }
-}
+};
 
-const updateContact = async (req, res) => {
+const updateContact = async (req, res, next) => {
   try {
-    if (Object.keys(req.body).length === 0) {
-      res.status(400).json({msg: "missing fields"});
+    const contact = await Contacts.findByIdAndUpdate(req.params.id,
+                                                     req.body,
+                                                     { new: true });
+    if (!contact) {
+      return res.status(404).json({msg: "Not Found"});
     }
-
-    const alteredContact = await updContact(req.params.id, req.body);
-    if(!alteredContact) {
-      res.status(404).json({msg: "Not Found"});
-    }
-
-    res.status(200).json(alteredContact);
+    res.json({
+      status: 'success',
+      code: 200,
+      data: {
+        result: contact,
+      },
+    });
   } catch (error) {
-    res.status(500).json({msg: error.message});
+    console.error(error);
+    next(error);
   }
-}
+};
+
+const updateFavorite = async (req, res, next) => {
+  try {
+    const fav = req.body;
+    if (fav === undefined) {
+      return res.status(400).json({msg: "missing field favorite"});
+    };
+    const contact = await Contacts.findByIdAndUpdate(req.params.id,
+                                                     req.body,
+                                                     { new: true });
+    if (!contact) {
+      return res.status(404).json({msg: "Not Found"});
+    }
+    res.json({
+      status: 'success',
+      code: 200,
+      data: {
+        result: contact,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
 
 module.exports = {
   listContacts,
@@ -70,4 +122,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  updateFavorite,
 }

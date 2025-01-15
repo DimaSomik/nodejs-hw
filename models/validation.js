@@ -4,6 +4,7 @@ const validationSchema = joi.object({
   name: joi.string().required(),
   email: joi.string().email().required(),
   phone: joi.string().required(),
+  favorite: joi.boolean(),
 });
 
 const checkContact = async (req, res, next) => {
