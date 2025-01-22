@@ -1,15 +1,15 @@
-const express = require('express')
+const express = require('express');
 const {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
-  updateFavorite } = require('../../models/contacts');
+  updateFavorite } = require('../../controllers/contacts');
 
-const { checkContact } = require('../../models/validation')
+const { checkContact } = require('../../validation/validation');
 
-const router = express.Router()
+const router = express.Router();
 
 router.get('/', listContacts);
 
@@ -21,6 +21,6 @@ router.delete('/:id', removeContact);
 
 router.put('/:id', checkContact, updateContact);
 
-router.patch("/:id/favorite", updateFavorite);
+router.patch('/:id/favorite', updateFavorite);
 
-module.exports = router
+module.exports = router;
