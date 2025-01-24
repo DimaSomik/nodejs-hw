@@ -1,7 +1,28 @@
-const Contacts = require('./schema.js');
+const Contacts = require('../models/contactsSchema.js');
 
-const listContacts = async (_, res, next) => {
+const listContacts = async (req, res, next) => {
   try {
+    const isFavorite = req.query.favorite;
+    if(isFavorite === "true") {
+      const favContacts = await Contacts.find({ 'favorite': true});
+      return res.json({
+        status: 'success',
+        code: 200,
+        data: {
+          result: favContacts,
+        },
+      });  
+    } else if (isFavorite === "false") {
+      const notFavContacts = await Contacts.find({ 'favorite': false});
+      return res.json({
+        status: 'success',
+        code: 200,
+        data: {
+          result: notFavContacts,
+        },
+      });  
+    };
+
     const contacts = await Contacts.find();
     res.json({
       status: 'success',
