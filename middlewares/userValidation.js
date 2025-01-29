@@ -18,6 +18,25 @@ const subscriptionSchema = joi.object({
   }), 
 });
 
+const avatarSchema = joi.object({
+  file: joi.object({
+    mimetype: joi.string()
+      .valid("image/jpeg", "image/png", "image/gif")
+      .required()
+      .messages({
+        "any.only": "Allowed file formats: jpeg, png, gif",
+        "any.required": "File is required",
+      }),
+    size: joi.number()
+      .max(4 * 1024 * 1024)
+      .required()
+      .messages({
+        "number.max": "File size can't be bigger than 4MB",
+        "any.required": "File size is required",
+      }),
+  }),
+});
+
 const checkUser = async (req, res, next) => {
   try {
     await validationSchema.validateAsync(req.body);
@@ -37,4 +56,21 @@ const checkSub = async (req, res, next) => {
   }
 };
 
-module.exports = { checkUser, checkSub };
+const checkAvatar = async (req, res, next) => {
+  if (!req.file) {
+    return res.status(400).json({ message: "File was not found"});
+  };
+
+  const { mimetype, size } = req.file;
+
+  try {
+    await avatarSchema.validateAsync({
+      file: { mimetype, size }
+    });
+    next();
+  } catch (error) {
+    res.status(400).json({msg: `missing required ${error.details[0].context.key} field`});
+  }
+};
+
+module.exports = { checkUser, checkSub, checkAvatar };

@@ -4,9 +4,11 @@ const {
     login,
     logout,
     current,
-    changeSub } = require('../../controllers/users');
-const auth = require('../../validation/authorization');
-const { checkUser, checkSub } = require('../../validation/userValidation');
+    changeSub,
+    updateAvatar } = require('../../controllers/users');
+const auth = require('../../middlewares/authorization');
+const upload = require('../../middlewares/upload');
+const { checkUser, checkSub, checkAvatar } = require('../../middlewares/userValidation');
 
 const router = express.Router();
 
@@ -19,5 +21,7 @@ router.get('/logout', auth, logout);
 router.get('/current', auth, current);
 
 router.patch('/', auth, checkSub, changeSub);
+
+router.patch('/avatars', auth, upload.single('avatar'), checkAvatar, updateAvatar);
 
 module.exports = router;
