@@ -8,8 +8,11 @@ const {
   updateFavorite } = require('../../controllers/contacts');
 
 const { checkContact } = require('../../validation/validation');
+const auth = require('../../validation/authorization');
 
 const router = express.Router();
+
+router.use(auth);
 
 router.get('/', listContacts);
 
