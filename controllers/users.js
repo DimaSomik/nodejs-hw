@@ -1,6 +1,11 @@
 const User = require('../models/userSchema');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const gravatar = require('gravatar');
+const { Jimp } = require('jimp');
+const path = require('path');
+const fs = require('fs/promises');
+const { v4: uuidv4 } = require('uuid');
 
 const signup = async (req, res, next) => {
     try {
@@ -12,7 +17,10 @@ const signup = async (req, res, next) => {
         }
 
         const saltedPassword = await bcrypt.hash(password, 10);
-        const newUser = new User({ email, password: saltedPassword});
+
+        const avatarURL = gravatar.url(email, {s: "250", r: "pg", d: "identicon"});
+
+        const newUser = new User({ email, password: saltedPassword, avatarURL});
         await newUser.save();
 
         res.json({
@@ -111,11 +119,49 @@ const changeSub = async (req, res, next) => {
     };
 };
 
+const updateAvatar = async (req, res, next) => {
+    try {
+        const { path: tmpPath, originalname} = req.file;
+        const { _id } = req.user;
+
+        const fileName = `${_id}_${uuidv4()}${path.extname(originalname)}`;
+        const avatarsPath = path.join(__dirname, "..", "public", "avatars");
+        const imgPath = path.join(avatarsPath, fileName);
+
+        await fs.mkdir(avatarsPath, { recursive: true });
+
+        try {
+            const img = await Jimp.read(tmpPath);
+            await img.resize({
+                w: 250,
+                h: 250,
+            });
+            await img.write(imgPath);
+            await fs.unlink(tmpPath);
+
+            const avatarURL = `/avatars/${fileName}`;
+            await User.findByIdAndUpdate(_id, { avatarURL });
+
+            res.json({
+                status: "Success",
+                avatarURL,
+                message: "Avatar was uploaded successfully!",
+            });
+        } catch (error) {
+            await fs.unlink(tmpPath).catch(console.error(error));
+        };
+    } catch (error) {
+        console.log(error);
+        next(error);
+    };
+};
+
 module.exports = {
     signup,
     login,
     logout,
     current,
     changeSub,
+    updateAvatar,
 };
 

@@ -7,8 +7,8 @@ const {
   updateContact,
   updateFavorite } = require('../../controllers/contacts');
 
-const { checkContact } = require('../../validation/validation');
-const auth = require('../../validation/authorization');
+const { checkContact } = require('../../middlewares/validation');
+const auth = require('../../middlewares/authorization');
 
 const router = express.Router();
 
