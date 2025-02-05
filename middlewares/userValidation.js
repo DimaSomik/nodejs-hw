@@ -37,6 +37,10 @@ const avatarSchema = joi.object({
   }),
 });
 
+const emailSchema = joi.object({
+  email: joi.string().email().required(),
+});
+
 const checkUser = async (req, res, next) => {
   try {
     await validationSchema.validateAsync(req.body);
@@ -45,7 +49,6 @@ const checkUser = async (req, res, next) => {
     res.status(400).json({msg: `missing required ${error.details[0].context.key} field`});
   }
 };
-
 
 const checkSub = async (req, res, next) => {
   try {
@@ -73,4 +76,14 @@ const checkAvatar = async (req, res, next) => {
   }
 };
 
-module.exports = { checkUser, checkSub, checkAvatar };
+
+const checkEmail = async (req, res, next) => {
+  try {
+    await emailSchema.validateAsync(req.body);
+    next();
+  } catch (error) {
+    res.status(400).json({msg: `missing required ${error.details[0].context.key} field`});
+  }
+};
+
+module.exports = { checkUser, checkSub, checkAvatar, checkEmail };

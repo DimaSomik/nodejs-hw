@@ -6,6 +6,7 @@ const { Jimp } = require('jimp');
 const path = require('path');
 const fs = require('fs/promises');
 const { v4: uuidv4 } = require('uuid');
+const sgMail = require('@sendgrid/mail');
 
 const signup = async (req, res, next) => {
     try {
@@ -17,11 +18,30 @@ const signup = async (req, res, next) => {
         }
 
         const saltedPassword = await bcrypt.hash(password, 10);
-
         const avatarURL = gravatar.url(email, {s: "250", r: "pg", d: "identicon"});
+        const verificationToken = uuidv4();
 
-        const newUser = new User({ email, password: saltedPassword, avatarURL});
+        const newUser = new User({ email, password: saltedPassword, avatarURL, verificationToken: verificationToken});
         await newUser.save();
+
+        const msg = {
+            to: 'example@gmail.com',
+            from: 'example@gmail.com',
+            subject: 'Email Verification',
+            text: `Your verification link: http://localhost:3000/api/users/verify/${verificationToken}`,
+        };
+
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+          
+        sgMail
+        .send(msg)
+        .then((response) => {
+            console.log(response[0].statusCode)
+            console.log(response[0].headers)
+        })
+        .catch(error => {
+            console.error(error);
+        });
 
         res.json({
             status: 'Created',
@@ -49,6 +69,10 @@ const login = async (req, res, next) => {
         const comparePass = await bcrypt.compare(password, user.password);
         if (!comparePass) {
             return res.status(401).json({ message: "Email or password is wrong"});
+        };
+
+        if (!user.verify) {
+            return res.status(401).json({ message: "Email is not verified!"});
         };
 
         const newToken = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
@@ -156,6 +180,77 @@ const updateAvatar = async (req, res, next) => {
     };
 };
 
+const verifyEmail = async (req, res, next) => {
+    try {
+        const userToVerify = await User.findOne({verificationToken: req.params.verificationToken});
+
+        if (!userToVerify) {
+            return res.status(400).json({ message: "Not Found"});
+        };
+
+        userToVerify.verificationToken = "null";
+        userToVerify.verify = true;
+        await userToVerify.save();
+
+        res.json({
+            status: 'Success',
+            code: 200,
+            message: "Verification successfull"
+        });
+    } catch (error) {
+        console.log(error);
+        next(error);
+    };
+};
+
+const verifyEmailAgain = async (req, res, next) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: "Missing required field email"});
+        };
+
+        const userToVerify = await User.findOne({email: email});
+
+        if (!userToVerify) {
+            return res.status(400).json({ message: "Not Found"});
+        };
+
+        if (userToVerify.verificationToken === "null") {
+            return res.status(400).json({ message: "Verification has already been passed"});
+        }
+
+        const msg = {
+            to: 'example@gmail.com',
+            from: 'example@gmail.com',
+            subject: 'Email Verification',
+            text: `Your verification link: http://localhost:3000/api/users/verify/${userToVerify.verificationToken}`,
+        };
+
+        sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+          
+        sgMail
+        .send(msg)
+        .then((response) => {
+            console.log(response[0].statusCode)
+            console.log(response[0].headers)
+        })
+        .catch(error => {
+            console.error(error);
+        });
+
+        res.json({
+            status: 'Success',
+            code: 200,
+            message: "Verification email sent"
+        });
+    } catch (error) {
+        console.log(error);
+        next(error);
+    };
+};
+
 module.exports = {
     signup,
     login,
@@ -163,5 +258,7 @@ module.exports = {
     current,
     changeSub,
     updateAvatar,
+    verifyEmail,
+    verifyEmailAgain,
 };
 
