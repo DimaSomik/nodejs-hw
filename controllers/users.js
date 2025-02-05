@@ -25,8 +25,8 @@ const signup = async (req, res, next) => {
         await newUser.save();
 
         const msg = {
-            to: 'dima20030911@gmail.com',
-            from: 'DmytroSomik@gmail.com',
+            to: 'example@gmail.com',
+            from: 'example@gmail.com',
             subject: 'Email Verification',
             text: `Your verification link: http://localhost:3000/api/users/verify/${verificationToken}`,
         };
@@ -222,8 +222,8 @@ const verifyEmailAgain = async (req, res, next) => {
         }
 
         const msg = {
-            to: 'dima20030911@gmail.com',
-            from: 'DmytroSomik@gmail.com',
+            to: 'example@gmail.com',
+            from: 'example@gmail.com',
             subject: 'Email Verification',
             text: `Your verification link: http://localhost:3000/api/users/verify/${userToVerify.verificationToken}`,
         };
